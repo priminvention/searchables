@@ -61,7 +61,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
           AWS_DEFAULT_REGION: ${{ vars.OSS_REGION }}
         run: |
+          aws configure set default.s3.addressing_style virtual
           aws s3 sync release-assets/ "s3://${{ vars.OSS_BUCKET_NAME }}/desktop/" \
-            --endpoint-url "https://${{ vars.OSS_BUCKET_NAME }}.${{ vars.OSS_ENDPOINT }}" \
+            --endpoint-url "https://${{ vars.OSS_ENDPOINT }}" \
             --no-progress \
             --size-only
