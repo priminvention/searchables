@@ -18,6 +18,10 @@ jobs:
       contains(github.event.release.tag_name, 'v') ||
       contains(github.event.release.tag_name, 'desktop')
     steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
       - name: Resolve release tag
         id: tag
         env:
@@ -57,13 +61,8 @@ jobs:
 
       - name: Sync to Aliyun OSS
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
-          AWS_DEFAULT_REGION: ${{ vars.OSS_REGION }}
-        run: |
-          aws configure set default.s3.addressing_style virtual
-          aws configure set default.s3.payload_signing_enabled false
-          aws s3 sync release-assets/ "s3://${{ vars.OSS_BUCKET_NAME }}/desktop/" \
-            --endpoint-url "https://${{ vars.OSS_ENDPOINT }}" \
-            --no-progress \
-            --size-only
+          OSS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          OSS_ACCESS_KEY_SECRET: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+          OSS_BUCKET_NAME: ${{ vars.OSS_BUCKET_NAME }}
+          OSS_ENDPOINT: ${{ vars.OSS_ENDPOINT }}
+        run: bun scripts/sync-to-oss.ts release-assets/

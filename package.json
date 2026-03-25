@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "sync": "bun scripts/sync-to-oss.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1016.0"
+  }
+}
