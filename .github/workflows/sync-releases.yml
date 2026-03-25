@@ -1,0 +1,43 @@
+name: Sync Releases to OSS
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # Only sync releases that contain desktop artifacts
+    if: >-
+      contains(github.event.release.tag_name, 'v') ||
+      contains(github.event.release.tag_name, 'desktop')
+    steps:
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release-assets
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --dir release-assets
+
+          # Check if desktop artifacts exist
+          DESKTOP_FILES=$(ls release-assets/*.dmg release-assets/*-setup.exe release-assets/latest*.yml 2>/dev/null | wc -l)
+          if [ "$DESKTOP_FILES" -eq 0 ]; then
+            echo "No desktop artifacts found, skipping sync."
+            exit 0
+          fi
+
+          echo "Found $DESKTOP_FILES desktop artifacts:"
+          ls -lh release-assets/
+
+      - name: Sync to Aliyun OSS
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+          AWS_DEFAULT_REGION: ${{ vars.OSS_REGION }}
+        run: |
+          aws s3 sync release-assets/ "s3://${{ vars.OSS_BUCKET_NAME }}/desktop/" \
+            --endpoint-url "https://${{ vars.OSS_ENDPOINT }}" \
+            --no-progress \
+            --size-only
