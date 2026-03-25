@@ -62,6 +62,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.OSS_REGION }}
         run: |
           aws configure set default.s3.addressing_style virtual
+          aws configure set default.s3.payload_signing_enabled false
           aws s3 sync release-assets/ "s3://${{ vars.OSS_BUCKET_NAME }}/desktop/" \
             --endpoint-url "https://${{ vars.OSS_ENDPOINT }}" \
             --no-progress \
